@@ -1,2 +1,3 @@
 # readap
-App dispositivos móviles
+App para módulo Énfasis en programación Móvil
+
