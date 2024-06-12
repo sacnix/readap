@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:readap/profile.dart';
+import 'global_state.dart';
 
 class Detail extends StatelessWidget {
   final String title;
@@ -11,7 +13,7 @@ class Detail extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.purple,
+        backgroundColor: Color(0xFF8D5EB2),
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
@@ -25,13 +27,11 @@ class Detail extends StatelessWidget {
         actions: [
           IconButton(
             icon: Icon(Icons.search),
-            onPressed: () {
-            },
+            onPressed: () {},
           ),
           IconButton(
             icon: Icon(Icons.share),
-            onPressed: () {
-            },
+            onPressed: () {},
           ),
         ],
       ),
@@ -43,21 +43,37 @@ class Detail extends StatelessWidget {
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
+        currentIndex: 1,
+        onTap: (index) {
+          if (index == 0) {
+            Navigator.pop(context);
+          } else if (index == 2) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => Profile(
+                  username: 'John Doe',
+                  email: 'john.doe@example.com',
+                ),
+              ),
+            );
+          }
+        },
         items: [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
-            label: 'Home',
+            label: 'Inicio',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.book),
-            label: 'Library',
+            label: 'Leer',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
-            label: 'Profile',
+            label: 'Perfil',
           ),
         ],
-        selectedItemColor: Colors.purple,
+        selectedItemColor: Color(0xFF8D5EB2),
         unselectedItemColor: Colors.grey,
       ),
     );

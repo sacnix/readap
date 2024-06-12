@@ -26,10 +26,4 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/images/login.png
-    - assets/images/create.png
-    - assets/images/forgot.png
-    - assets/images/carousel1.jpg
-    - assets/images/carousel2.jpg
-    - assets/images/carousel3.jpg
-    - assets/images/item_placeholder.jpg
+    - assets/images/

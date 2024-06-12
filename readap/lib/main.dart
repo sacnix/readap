@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:readap/history.dart';
 import 'home.dart';
 import 'login.dart';
 import 'create_account.dart';
 import 'forgot_password.dart';
-import 'styles/styles.dart'; 
+import 'styles/styles.dart';
 
 void main() {
   runApp(MyApp());
@@ -16,7 +17,7 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Demo',
       theme: ThemeData(
         primarySwatch: Colors.purple,
-        textTheme: AppStyles.textTheme, 
+        textTheme: AppStyles.textTheme,
       ),
       home: Login(),
       routes: {
@@ -24,6 +25,7 @@ class MyApp extends StatelessWidget {
         '/login': (context) => Login(),
         '/create_account': (context) => CreateAccount(),
         '/forgot_password': (context) => ForgotPassword(),
+        '/history': (context) => History(),
       },
     );
   }
