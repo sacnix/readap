@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "357070245031",
+    "project_id": "readap-fb5bf",
+    "storage_bucket": "readap-fb5bf.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:357070245031:android:49f2d7e424ef8386a01f82",
+        "android_client_info": {
+          "package_name": "com.example.readap"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDvQSBeAX4G2mAvxJCrMwiJclnpbI04y94"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

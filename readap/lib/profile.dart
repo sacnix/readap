@@ -1,15 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:readap/login.dart';
-
 import 'history.dart';
 import 'styles/styles.dart';
 
-class Profile extends StatelessWidget {
-  final String username;
-  final String email;
+class Profile extends StatefulWidget {
+  @override
+  _ProfileState createState() => _ProfileState();
+}
 
-  Profile({required this.username, required this.email});
+class _ProfileState extends State<Profile> {
+  late User? user;
+  String username = '';
+  String email = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserInfo();
+  }
+
+  Future<void> _loadUserInfo() async {
+    user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      setState(() {
+        email = user!.email ?? '';
+      });
+
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
+      setState(() {
+        username = userDoc['username'] ?? '';
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +87,8 @@ class Profile extends StatelessWidget {
               child: ElevatedButton(
                 style: AppStyles.elevatedButtonStyle,
                 onPressed: () {
-                  Navigator.push(
+                  FirebaseAuth.instance.signOut();
+                  Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (context) => Login()),
                   );

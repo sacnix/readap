@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'home.dart';
 import 'create_account.dart';
 import 'forgot_password.dart';
 import 'styles/styles.dart';
+import 'utils.dart';
 
 class Login extends StatefulWidget {
   @override
@@ -11,6 +13,24 @@ class Login extends StatefulWidget {
 
 class _LoginState extends State<Login> {
   bool _isPasswordVisible = false;
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  void _login(BuildContext context) async {
+    try {
+      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
+
+      Utils.navigateToHome(context);
+    } catch (e) {
+      print('Error: $e');
+      Utils.handleAuthError(context, e);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -44,9 +64,10 @@ class _LoginState extends State<Login> {
               ),
               SizedBox(height: 20),
               TextField(
+                controller: _emailController,
                 decoration: InputDecoration(
                   prefixIcon: Icon(Icons.person),
-                  labelText: 'Usuario',
+                  labelText: 'Correo',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
@@ -54,8 +75,8 @@ class _LoginState extends State<Login> {
               ),
               SizedBox(height: 20),
               TextField(
-                obscureText:
-                    !_isPasswordVisible,
+                controller: _passwordController,
+                obscureText: !_isPasswordVisible,
                 decoration: InputDecoration(
                   prefixIcon: Icon(Icons.lock),
                   labelText: 'Contraseña',
@@ -70,8 +91,7 @@ class _LoginState extends State<Login> {
                     ),
                     onPressed: () {
                       setState(() {
-                        _isPasswordVisible =
-                            !_isPasswordVisible;
+                        _isPasswordVisible = !_isPasswordVisible;
                       });
                     },
                   ),
@@ -79,7 +99,7 @@ class _LoginState extends State<Login> {
               ),
               SizedBox(height: 10),
               Align(
-                alignment: Alignment.centerRight, 
+                alignment: Alignment.centerRight,
                 child: GestureDetector(
                   onTap: () {
                     Navigator.push(
@@ -97,20 +117,15 @@ class _LoginState extends State<Login> {
               ),
               SizedBox(height: 20),
               SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: AppStyles.elevatedButtonStyle,
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => Home()),
-                      );
-                    },
-                    child: Text(
-                      'Iniciar sesión',
-                    ),
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: AppStyles.elevatedButtonStyle,
+                  onPressed: () => _login(context),
+                  child: Text(
+                    'Iniciar sesión',
                   ),
                 ),
+              ),
             ],
           ),
         ),

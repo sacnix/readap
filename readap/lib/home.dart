@@ -1,6 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'detail.dart';
 import 'global_state.dart';
 import 'profile.dart';
@@ -11,95 +13,64 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  final List<Map<String, String>> popularItems = [
-    {
-      'title': 'La leyenda de la serpiente blanca',
-      'content':
-          'Había una vez un pequeño pueblo enclavado entre altas montañas y densos bosques...'
-    },
-    {'title': 'Otra historia', 'content': 'This is another story content...'},
-    {
-      'title': 'Aquí otra historia',
-      'content': 'This is yet another story content...'
-    },
-    {'title': 'La montaña', 'content': 'This is more story content...'}
-  ];
-
-  final List<Map<String, String>> fantasyItems = [
-    {
-      'title': 'Fantasy Story 1',
-      'image': 'assets/images/fantasy1.jpg',
-      'content': 'Content of Fantasy Story 1'
-    },
-    {
-      'title': 'Fantasy Story 2',
-      'image': 'assets/images/fantasy2.jpg',
-      'content': 'Content of Fantasy Story 2'
-    },
-    {
-      'title': 'Fantasy Story 3',
-      'image': 'assets/images/fantasy3.jpg',
-      'content': 'Content of Fantasy Story 3'
-    },
-  ];
-
-  final List<Map<String, String>> adventureItems = [
-    {
-      'title': 'Adventure Story 1',
-      'image': 'assets/images/adventure1.jpg',
-      'content': 'Content of Adventure Story 1'
-    },
-    {
-      'title': 'Adventure Story 2',
-      'image': 'assets/images/adventure2.jpg',
-      'content': 'Content of Adventure Story 2'
-    },
-    {
-      'title': 'Adventure Story 3',
-      'image': 'assets/images/adventure3.jpg',
-      'content': 'Content of Adventure Story 3'
-    },
-  ];
-
-  late List<Map<String, String>> filteredPopularItems;
-  late List<Map<String, String>> filteredFantasyItems;
-  late List<Map<String, String>> filteredAdventureItems;
-  TextEditingController searchController = TextEditingController();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  late TextEditingController searchController;
   int _selectedIndex = 0;
   String selectedCategory = 'Todas';
+
+  List<Map<String, dynamic>> stories = [];
+  List<Map<String, dynamic>> filteredStories = [];
+  List<Map<String, dynamic>> carouselItems = [];
+  Set<String> categories = {};
 
   @override
   void initState() {
     super.initState();
-    filteredPopularItems = popularItems;
-    filteredFantasyItems = fantasyItems;
-    filteredAdventureItems = adventureItems;
+    searchController = TextEditingController();
+    fetchStories();
+    fetchCarouselItems();
+  }
+
+  Future<void> fetchStories() async {
+    final QuerySnapshot snapshot =
+        await FirebaseFirestore.instance.collection('stories').get();
+    final List<Map<String, dynamic>> fetchedStories = snapshot.docs.map((doc) {
+      return doc.data() as Map<String, dynamic>;
+    }).toList();
+
+    setState(() {
+      stories = fetchedStories;
+      filteredStories = fetchedStories;
+      categories =
+          fetchedStories.map((story) => story['category'] as String).toSet();
+    });
+  }
+
+  Future<void> fetchCarouselItems() async {
+    final QuerySnapshot snapshot =
+        await FirebaseFirestore.instance.collection('carousel').get();
+    final List<Map<String, dynamic>> fetchedCarouselItems =
+        snapshot.docs.map((doc) {
+      return doc.data() as Map<String, dynamic>;
+    }).toList();
+
+    setState(() {
+      carouselItems = fetchedCarouselItems;
+    });
   }
 
   void filterSearch(String query) {
     setState(() {
       if (query.isEmpty) {
-        _resetFilters();
+        filteredStories = stories;
       } else {
-        filteredPopularItems = _filterItems(popularItems, query);
-        filteredFantasyItems = _filterItems(fantasyItems, query);
-        filteredAdventureItems = _filterItems(adventureItems, query);
+        filteredStories = stories
+            .where((story) =>
+                story['title'].toLowerCase().contains(query.toLowerCase()))
+            .toList();
       }
+      _updateCategories(filteredStories);
     });
-  }
-
-  void _resetFilters() {
-    filteredPopularItems = popularItems;
-    filteredFantasyItems = fantasyItems;
-    filteredAdventureItems = adventureItems;
-  }
-
-  List<Map<String, String>> _filterItems(
-      List<Map<String, String>> items, String query) {
-    return items
-        .where((item) =>
-            item['title']!.toLowerCase().contains(query.toLowerCase()))
-        .toList();
   }
 
   void showFilterDialog() {
@@ -112,9 +83,9 @@ class _HomeState extends State<Home> {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               _buildCategoryOption('Todas'),
-              _buildCategoryOption('Populares'),
-              _buildCategoryOption('Fantasía'),
-              _buildCategoryOption('Aventura'),
+              ...categories.map((category) {
+                return _buildCategoryOption(category);
+              }).toList(),
             ],
           ),
           actions: <Widget>[
@@ -148,20 +119,19 @@ class _HomeState extends State<Home> {
   void _applyCategoryFilter() {
     setState(() {
       if (selectedCategory == 'Todas') {
-        _resetFilters();
-      } else if (selectedCategory == 'Populares') {
-        filteredPopularItems = popularItems;
-        filteredFantasyItems = [];
-        filteredAdventureItems = [];
-      } else if (selectedCategory == 'Fantasía') {
-        filteredPopularItems = [];
-        filteredFantasyItems = fantasyItems;
-        filteredAdventureItems = [];
-      } else if (selectedCategory == 'Aventura') {
-        filteredPopularItems = [];
-        filteredFantasyItems = [];
-        filteredAdventureItems = adventureItems;
+        filteredStories = stories;
+      } else {
+        filteredStories = stories
+            .where((story) => story['category'] == selectedCategory)
+            .toList();
       }
+      _updateCategories(filteredStories);
+    });
+  }
+
+  void _updateCategories(List<Map<String, dynamic>> currentStories) {
+    setState(() {
+      categories = currentStories.map((story) => story['category'] as String).toSet();
     });
   }
 
@@ -186,10 +156,7 @@ class _HomeState extends State<Home> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => Profile(
-            username: 'John Doe',
-            email: 'john.doe@example.com',
-          ),
+          builder: (context) => Profile(),
         ),
       ).then((_) {
         setState(() {
@@ -203,22 +170,32 @@ class _HomeState extends State<Home> {
     }
   }
 
-  void _navigateToDetail(Map<String, String> item) {
+  void _navigateToDetail(Map<String, dynamic> item) async {
     GlobalState.lastDetailTitle = item['title'];
-    GlobalState.lastDetailContent = item['content'];
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => Detail(
-          title: item['title']!,
-          content: item['content']!,
-        ),
-      ),
-    ).then((_) {
-      setState(() {
-        _selectedIndex = 0;
+    GlobalState.lastDetailContent = item['body'];
+
+    User? user = _auth.currentUser;
+    if (user != null) {
+      await FirebaseFirestore.instance.collection('history').add({
+        'userId': user.uid,
+        'title': item['title'],
+        'timestamp': FieldValue.serverTimestamp(),
       });
-    });
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => Detail(
+            title: item['title'],
+            content: item['body'],
+          ),
+        ),
+      ).then((_) {
+        setState(() {
+          _selectedIndex = 0;
+        });
+      });
+    }
   }
 
   @override
@@ -233,14 +210,12 @@ class _HomeState extends State<Home> {
             SizedBox(height: 20),
             _buildCarousel(),
             SizedBox(height: 20),
-            if (filteredPopularItems.isNotEmpty)
-              _buildSection('Populares', filteredPopularItems),
-            SizedBox(height: 20),
-            if (filteredFantasyItems.isNotEmpty)
-              _buildSection('Fantasía', filteredFantasyItems),
-            SizedBox(height: 20),
-            if (filteredAdventureItems.isNotEmpty)
-              _buildSection('Aventura', filteredAdventureItems),
+            ...categories.map((category) {
+              final categoryStories = filteredStories
+                  .where((story) => story['category'] == category)
+                  .toList();
+              return _buildSection(category, categoryStories);
+            }).toList(),
             SizedBox(height: 20),
           ],
         ),
@@ -298,23 +273,13 @@ class _HomeState extends State<Home> {
 
   Widget _buildCarousel() {
     return CarouselSlider(
-      items: [
-        _buildCarouselItem(
-          imagePath: 'assets/images/carousel1.jpg',
-          title: 'La puerta celeste',
-          description: 'Otro pasaje mágico',
-        ),
-        _buildCarouselItem(
-          imagePath: 'assets/images/carousel2.jpg',
-          title: 'Cementerio Susurrante',
-          description: '¿Tumbas que hablan?',
-        ),
-        _buildCarouselItem(
-          imagePath: 'assets/images/carousel3.jpg',
-          title: 'El Jinete Enmascarado',
-          description: '¿Héroe o villano?',
-        ),
-      ],
+      items: carouselItems.map((item) {
+        return _buildCarouselItem(
+          imagePath: item['image'],
+          title: item['title'],
+          description: item['description'],
+        );
+      }).toList(),
       options: CarouselOptions(
         height: 180.0,
         enlargeCenterPage: true,
@@ -328,7 +293,7 @@ class _HomeState extends State<Home> {
     );
   }
 
-  Widget _buildSection(String title, List<Map<String, String>> items) {
+  Widget _buildSection(String title, List<Map<String, dynamic>> items) {
     return Column(
       children: [
         _buildSectionTitle(title),
@@ -353,7 +318,7 @@ class _HomeState extends State<Home> {
     );
   }
 
-  Widget _buildHorizontalList(List<Map<String, String>> items) {
+  Widget _buildHorizontalList(List<Map<String, dynamic>> items) {
     return Container(
       height: 200,
       child: ListView.builder(
@@ -366,7 +331,7 @@ class _HomeState extends State<Home> {
     );
   }
 
-  Widget _buildListItem(Map<String, String> item) {
+  Widget _buildListItem(Map<String, dynamic> item) {
     return GestureDetector(
       onTap: () {
         _navigateToDetail(item);
@@ -377,9 +342,7 @@ class _HomeState extends State<Home> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(15),
           image: DecorationImage(
-            image: item.containsKey('image')
-                ? AssetImage(item['image']!)
-                : AssetImage('assets/images/item_placeholder.jpg'),
+            image: AssetImage(item['url_image']),
             fit: BoxFit.cover,
           ),
         ),
@@ -400,7 +363,7 @@ class _HomeState extends State<Home> {
             child: Align(
               alignment: Alignment.bottomLeft,
               child: Text(
-                item['title']!,
+                item['title'],
                 style: GoogleFonts.lato(
                   fontSize: 16,
                   color: Colors.white,

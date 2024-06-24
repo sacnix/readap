@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:readap/login.dart';
 import 'styles/styles.dart';
 import 'home.dart';
+import 'utils.dart';
 
 class CreateAccount extends StatefulWidget {
   @override
@@ -12,6 +16,39 @@ class _CreateAccountState extends State<CreateAccount> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   bool _isPasswordVisible = false;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  void _createAccount() async {
+    try {
+      UserCredential userCredential =
+          await _auth.createUserWithEmailAndPassword(
+        email: emailController.text,
+        password: passwordController.text,
+      );
+      User? user = userCredential.user;
+
+      if (user != null) {
+        await _firestore.collection('users').doc(user.uid).set({
+          'username': usernameController.text,
+          'email': emailController.text,
+        });
+      }
+      Utils.showCustomDialog(
+        context,
+        'Registro',
+        'Registro exitoso',
+        'Iniciar sesión',
+        () {
+          Navigator.of(context).pop();
+          Utils.navigateToLogin(context);
+        },
+      );
+    } catch (e) {
+      print('Error: $e');
+      Utils.handleAuthError(context, e);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -85,12 +122,7 @@ class _CreateAccountState extends State<CreateAccount> {
                   width: double.infinity,
                   child: ElevatedButton(
                     style: AppStyles.elevatedButtonStyle,
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => Home()),
-                      );
-                    },
+                    onPressed: _createAccount,
                     child: Text('Crear cuenta'),
                   ),
                 ),
